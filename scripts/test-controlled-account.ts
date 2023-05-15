@@ -3,8 +3,8 @@ import { ethers } from "hardhat";
 import { UserOperation, getUserOperationHash } from "../lib";
 
 const ENTRY_POINT_ADDRESS = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789";
-const CONTROLLER_ADDRESS = "0x23c58DdE1842161fbC157A28f936Cb30518E4CfA"; // goerli
-const CONTROLLED_ACCOUNT_ADDRESS = "0x53ECcD5eb46Edf90e678c0D0b59cade9F8a41572"; // goerli
+const CONTROLLER_ADDRESS = "0x4e1Ef6e428d499aEca6721183Da5151E86d37aC5"; // goerli
+const CONTROLLED_ACCOUNT_ADDRESS = "0xdC5D8017A28cb92072ce6e2dE469C3A58ddcc293"; // goerli
 
 const VERIFICATION_GAS_LIMIT = ethers.BigNumber.from(100_000);
 const PRE_VERIFICATION_GAS = ethers.BigNumber.from(21_000);
