@@ -1,18 +1,22 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.19;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
+import "./ControlledAccount.sol";
 import "./IAccount.sol";
 import "./IController.sol";
 import "./UserOperation.sol";
 
-contract Controller is IController {
+contract Controller is IController, Ownable {
     using ECDSA for bytes32;
 
     uint256 private constant SIG_VALIDATION_FAILED = 1;
 
     address public immutable entryPoint;
+
+    mapping(address account => address owner) private _owners;
 
     modifier onlyMyself() {
         require(msg.sender == address(this), "C: caller must be myself");
@@ -26,6 +30,46 @@ contract Controller is IController {
 
     constructor(address entryPoint_) {
         entryPoint = entryPoint_;
+    }
+
+    function getAccountAddress(bytes32 salt_) external view returns (address) {
+        return
+            address(
+                uint160(
+                    uint256(
+                        keccak256(
+                            abi.encodePacked(
+                                bytes1(0xff),
+                                address(this),
+                                salt_,
+                                keccak256(
+                                    abi.encodePacked(
+                                        type(ControlledAccount).creationCode,
+                                        uint256(uint160(address(this)))
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+    }
+
+    function createAccount(
+        address owner_,
+        bytes32 salt_
+    ) external onlyOwner returns (address) {
+        address account = address(
+            new ControlledAccount{salt: salt_}(address(this))
+        );
+
+        _owners[account] = owner_;
+
+        return account;
+    }
+
+    function ownerOf(address account_) external view returns (address) {
+        return _owners[account_];
     }
 
     function validateUserOp(

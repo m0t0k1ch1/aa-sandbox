@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import "./IAccount.sol";
 import "./IController.sol";
 import "./IERC4337EntryPoint.sol";
 
-contract ControlledAccount is IAccount, Ownable {
+contract ControlledAccount is IAccount {
     using ECDSA for bytes32;
 
     IController private immutable _controller;
@@ -31,7 +30,10 @@ contract ControlledAccount is IAccount, Ownable {
         bytes32 hash_,
         bytes calldata signature_
     ) external view returns (bytes4) {
-        require(hash_.recover(signature_) == owner(), "CA: invalid signer");
+        require(
+            hash_.recover(signature_) == _controller.ownerOf(address(this)),
+            "CA: invalid signer"
+        );
 
         return IERC1271.isValidSignature.selector;
     }

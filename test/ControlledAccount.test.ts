@@ -3,6 +3,7 @@ import { ethers } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 
+import { ControlledAccount } from "../typechain-types";
 import { UserOperation, getUserOperationHash } from "../lib";
 
 describe("ControlledAccount", () => {
@@ -15,13 +16,22 @@ describe("ControlledAccount", () => {
     const controller = await controllerFactory.deploy(owner.address);
     await controller.deployed();
 
-    const controlledAccountFactory = await ethers.getContractFactory(
-      "ControlledAccount"
-    );
-    const controlledAccount = await controlledAccountFactory.deploy(
-      controller.address
-    );
-    await controlledAccount.deployed();
+    let controlledAccount: ControlledAccount;
+    {
+      const salt = ethers.constants.HashZero;
+
+      const address = await controller.getAccountAddress(salt);
+
+      {
+        const tx = await controller.createAccount(owner.address, salt);
+        await tx.wait();
+      }
+
+      controlledAccount = await ethers.getContractAt(
+        "ControlledAccount",
+        address
+      );
+    }
 
     return { network, owner, other, controller, controlledAccount };
   }
@@ -33,7 +43,10 @@ describe("ControlledAccount", () => {
       );
 
       expect(await controller.entryPoint()).to.equal(owner.address);
-      expect(await controlledAccount.owner()).to.equal(owner.address);
+      expect(await controller.owner()).to.equal(owner.address);
+      expect(await controller.ownerOf(controlledAccount.address)).to.equal(
+        owner.address
+      );
     });
   });
 
